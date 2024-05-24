@@ -13,9 +13,15 @@
 - timestamps
 
 RELATIONSHIPS
-attendees(): all students required to attend
-classes(): all classes required to partake of this lecture
+expected_attendees(): all students required to attend
+
+class_groups(): all classes required to partake of this lecture
+
 lecturer(): lecturer to handle the Lecture
+
+attendees(): Students who attended the lecture
+
+absentees(): Students who failed to attend the lecture
 
 
 FUNCTIONS

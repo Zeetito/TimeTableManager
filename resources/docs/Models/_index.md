@@ -9,12 +9,13 @@
 
 - Course
 - Classroom [Eg FF1]
-- Class [Eg CS3 - 2025]
+- ClassGroup [Eg CS3 - 2025]
 
 - User [Student/Staff]
 - 
 <!-- - CoursePrograms -->
-- ClassCourses
+- ClassGroupCourse
+- ClassGroupUser
 - Lecture
 - ClassCourseLectures 
 - Attendance

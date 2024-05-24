@@ -3,8 +3,8 @@
 ##   Table Attributes
 - id
 - name
-- college_id
 - department_id
+- floor
 - is_lab
 - exams_cap [Capacity during Exams]
 - reg_cap [Regular Day Capacity -  for class]
