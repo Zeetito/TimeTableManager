@@ -82,6 +82,15 @@ class User extends Authenticatable
         return $this->firstname." ".$this->othername." ".$this->lastname;
     }
 
+    // Get Avatar
+    public function get_avatar(){
+        if($this->gender == 'm'){
+            return asset('img/avatar/male_avatar.jpg');
+        }else{
+            return asset('img/avatar/female_avatar.jpg');
+        }
+    }
+
 
     // STATIC FUNCTIONS
     // Get All Staff

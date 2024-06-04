@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use App\Models\Department;
+use App\Models\CourseLecturer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -39,4 +41,20 @@ class Course extends Model
         return $this->hasMany(Lecture::class)->where('semester_id',$sem)->get();
         // return Lecture::where('semester_id',$sem)->
     }
+
+    // Get courseLecture instances
+    public function course_lecturers(){
+        return $this->hasMany(CourseLecturer::class);
+    }
+
+    // Get the lecturers who teach this course
+    public function lecturers(){
+        return User::whereIn('id',$this->course_lecturers->pluck('user_id'))->get();
+    }
+
+
+    // FUNCTIONS
+    
+
+    // STATIC FUNCTIONS
 }

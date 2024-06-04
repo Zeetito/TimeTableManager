@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Models\Course;
 use App\Models\Lecture;
 use App\Models\Program;
+use App\Models\Semester;
+use Illuminate\Support\Carbon;
 use App\Models\ClassGroupCourse;
 use App\Models\ClassCourseLecture;
 use Illuminate\Database\Eloquent\Model;
@@ -65,7 +67,13 @@ class ClassGroup extends Model
 
         // Ge All related Courses for the Sem
         public function courses_for($sem){
-            return ClassGroupCourse::where('class_group_id',$this->id)->where('semester_id',$sem)->get();
+            return Course::whereIn('id',$this->class_group_courses_for($sem)->pluck('course_id'))->get();
+            // return ClassGroupCourse::where('class_group_id',$this->id)->where('semester_id',$sem)->get();
+        }
+
+        // Get Total credit hours for the sem
+        public function total_credit_hour_for($sem){
+            return $this->courses_for($sem)->pluck('credit_hour')->sum();
         }
 
     // Lectures
@@ -79,8 +87,23 @@ class ClassGroup extends Model
 
         // Get all related lectues for the Sem
         public function lectures_for($sem){ 
-            $courses = $this->class_group_courses->pluck('course_id');
-            return Lecture::where('semester_id',$sem)->whereIn('course_id',$courses)->get();
+            return $this->all_lectures()->where('semester_id',$sem);
+
+            // $courses = $this->class_group_courses->pluck('course_id');
+            // return Lecture::where('semester_id',$sem)->whereIn('course_id',$courses)->get();
+        }
+
+        // Get Lectures for sem grouped by Week
+        public function grouped_lectures_for($sem){
+            $lectures = $this->lectures_for($sem)->sortBy('date');
+
+            // Group by week
+            $groupedLectures = $lectures->groupBy(function ($lecture) {
+                // Get the start of the week (Sunday) for the lecture date
+                return Carbon::parse($lecture->date)->startOfWeek()->format('Y-m-d');
+            });
+
+            return $groupedLectures;
         }
 
         // Get all related upcoming lectues for the Sem
@@ -104,9 +127,30 @@ class ClassGroup extends Model
 
         }
 
+    
+    // ClassGroup Course
+        // Get related classgroup course instance for a course for the current sem
+       public function current_classgroup_course_instance_with(Course $course){
+            $active_semester =  Semester::active_semester();
+            return ClassGroupCourse::where('class_group_id',$this->id)->where('course_id',$course->id)->where('semester_id',$active_semester->id)->first();
+        }
+
 
 
 // FUNCTIONS
+    // slug_name
+    public function slug_name(){
+        return $this->name." - ".$this->year;
+    }
+
+    // Check if class group can take more courses for the sem
+    public function can_add_course($sem){
+        if($this->total_credit_hour_for($sem) >= 22){
+            return false;
+        }else{
+            return true;
+        }
+    }
 
     // Attendance
         // Get Attendance for a ClassGroupCourse instance / Course

@@ -15,6 +15,7 @@
 - 
 <!-- - CoursePrograms -->
 - ClassGroupCourse
+- CourseLecture
 - ClassGroupUser
 - Lecture
 - ClassCourseLectures 

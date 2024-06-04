@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use App\Models\Course;
 use App\Models\Semester;
 use App\Models\ClassGroup;
@@ -16,6 +17,7 @@ class ClassGroupCourse extends Model
     protected $fillable = [
         'class_group_id',
         'course_id',
+        'user_id',//lecturer
         'semester_id',
     ];
 
@@ -34,6 +36,10 @@ class ClassGroupCourse extends Model
         public function semester(){
             return $this->belongsTo(Semester::class);
         }
+        // Get the lecturer
+        // public function lecturer(){
+        //     return $this->belongsTo(User::class);
+        // }
 
         // Get related Class Course Lecture instance
         public function class_group_course_lectures(){
@@ -47,7 +53,17 @@ class ClassGroupCourse extends Model
             return Lecture::whereIn('id',$this->class_group_course_lectures->pluck('lecture_id'));
         }
 
+        // Get lecturer(s)
+        public function lecturer(){
+            return $this->belongsTo(User::class,'user_id');
+        }
+
+
 // FUNCTIONS
+        // Check if the instance has a lecturer
+        public function has_lecturer(){
+            return $this->lecturer == TRUE;
+        }
 
 // STATIC FUNCTIONS
         // Return instances for a particular sem

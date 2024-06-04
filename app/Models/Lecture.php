@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Course;
+use App\Models\Classroom;
 use App\Models\Attendance;
 use App\Models\ClassGroup;
 use App\Models\AttendanceUser;
@@ -82,8 +84,13 @@ class Lecture extends Model
             return $this->hasOne(Attendance::class);
         }
 
-// FUNCTIONS
+    // Classroom
+    public function classroom(){
+        return $this->belongsTo(Classroom::class,);
+    }
 
+// FUNCTIONS
+    
 // STATIC FUNCTIONS
         // Get Lectures for a particular Semster
         public static function forSem($sem){
@@ -99,4 +106,20 @@ class Lecture extends Model
         public static function with_attendance_instance(){
             
         }
+
+        // Get lectures grouped by Week for a sem
+        public static function getLecturesGroupedByWeek($sem)
+        {
+            // Fetch lectures for the given semester
+            $lectures = self::forSem($sem);
+
+            // Group by week
+            $groupedLectures = $lectures->groupBy(function ($lecture) {
+                // Get the start of the week (Sunday) for the lecture date
+                return Carbon::parse($lecture->date)->startOfWeek()->format('Y-m-d');
+            });
+
+            return $groupedLectures;
+        }
+
 }
