@@ -29,28 +29,34 @@ class Lecture extends Model
         'status',
     ];
 
-// RELATIONSHIPS
+// RELATIONSHIPS'
+    // COURSES
         // Get the related course
         public function course(){
             return $this->belongsTo(Course::class);
         }
 
+    // USER/LECTURER
         // Get the related lecturer
         public function lecturer(){
             return $this->belongsTo(User::class,'user_id');
         }
 
+
+    // CLASSGROUP COURSE-LECTURE
         // GEt all ClassGroups , Courses and Lecture Instances
         public function class_group_course_lectures(){
             return $this->hasMany(ClassCourseLecture::class);
         }
 
+    // CLASSGROUP COURSES
         // Get related Class Group and Course INstances
         public function class_group_courses(){
             return ClassGroupCourse::whereIn('id',$this->class_group_course_lectures->pluck('class_group_course_id'))->get();
             // return $this->hasManyThrough(ClassGroupCourse::class,ClassCourseLecture::class,"class_group_course_id","id");
         }
 
+    // CLASSGROUPS
         // Get the related ClassGroups
         public function class_groups(){
 
@@ -63,6 +69,7 @@ class Lecture extends Model
             // return $this->hasManyThrough(ClassGroup::class,ClassCourseLecture::class,"class_group_course_id","id");
         }
 
+    // ATTENDANCE
         // Get Expected Attendees
         public function expected_attendees(){
             return User::whereIn('class_group_id',$this->class_group_courses()->pluck('class_group_id'))->get();
@@ -84,14 +91,16 @@ class Lecture extends Model
             return $this->hasOne(Attendance::class);
         }
 
-    // Classroom
-    public function classroom(){
-        return $this->belongsTo(Classroom::class,);
-    }
+    // CLASSROOM
+        // Classroom
+        public function classroom(){
+            return $this->belongsTo(Classroom::class,);
+        }
 
 // FUNCTIONS
     
 // STATIC FUNCTIONS
+    // LECTURES
         // Get Lectures for a particular Semster
         public static function forSem($sem){
             return self::where('semester_id',$sem)->get();

@@ -14,9 +14,12 @@ return new class extends Migration
         Schema::create('classrooms', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('department_id')->nullable();
+            $table->foreignId('department_id')->nullable()
+                    ->constrained()
+                    ->onUpdate('cascade')
+                    ->onDelete('cascade');
             $table->string('floor')->nullable();
-            $table->boolean('is_lab')->default(0);
+            $table->integer('is_lab')->default(0);//0 no, 1, lab, 2 auditorium
             $table->integer('exams_cap')->nullable();
             $table->integer('reg_cap')->nullable();
             $table->integer('max_cap')->nullable();

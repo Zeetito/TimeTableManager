@@ -11,36 +11,37 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('lectures', function (Blueprint $table) {
+        Schema::create('timetable_courses', function (Blueprint $table) {
             $table->id();
+
             $table->foreignId('course_id')
                     ->constrained()
                     ->onUpdate('cascade')
                     ->onDelete('cascade');
-
-            $table->foreignId('user_id')//Lecturer
-                    ->constrained()
-                    ->onUpdate('cascade')
-                    ->onDelete('set null');
-
-            $table->integer('is_tutorial')->default(0);//0 
 
             $table->foreignId('semester_id')
                     ->constrained()
                     ->onUpdate('cascade')
                     ->onDelete('cascade');
 
-
-            $table->time('start_time');
-            $table->time('end_time');
-            $table->date('date')->nullable();
+            $table->integer('day');
+            $table->integer('duration')->nullable();
 
             $table->foreignId('classroom_id')->nullable()
                     ->constrained()
                     ->onUpdate('cascade')
                     ->onDelete('set null');
-                    
-            $table->integer('status');
+
+            $table->time('start_time');
+
+            $table->time('end_time');
+
+            $table->foreignId('user_id')->nullable()
+                    ->constrained()
+                    ->onUpdate('cascade')
+                    ->onDelete('set null'); //lecturer
+            
+            
             $table->timestamps();
         });
     }
@@ -50,6 +51,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('lectures');
+        Schema::dropIfExists('timetable_courses');
     }
 };

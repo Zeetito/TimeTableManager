@@ -7,6 +7,7 @@ use App\Models\Lecture;
 use App\Models\Program;
 use App\Models\Semester;
 use Illuminate\Support\Carbon;
+use App\Models\TimetableCourse;
 use App\Models\ClassGroupCourse;
 use App\Models\ClassCourseLecture;
 use Illuminate\Database\Eloquent\Model;
@@ -51,14 +52,16 @@ class ClassGroup extends Model
             return $this->hasManyThrough(ClassCourseLecture::class,ClassGroupCourse::class,'class_group_id','class_group_course_id');
         }
 
-    // Programs
-        // Get related program
-        public function program(){
-            return $this->belongsTo(Program::class);
-        }
 
 
-    // Courses
+        // PROGRAMS
+            // Get related program
+            public function program(){
+                return $this->belongsTo(Program::class);
+            }
+
+
+        // COURSES
 
         // Get all courses Taken by the class group
         public function all_courses(){
@@ -76,59 +79,59 @@ class ClassGroup extends Model
             return $this->courses_for($sem)->pluck('credit_hour')->sum();
         }
 
-    // Lectures
+        // LECTURES
 
-        // Get All related lectures
-        public function all_lectures(){
-            // $courses = $this->class_course_lectures->pluck('course_id');
-            return Lecture::whereIn('id',$this->class_course_lectures->pluck('lecture_id'))->get();
-            // return $this->hasManyThrough(Lecture::class,ClassCourseLecture::class,"lecture_id","id");
-        }
+            // Get All related lectures
+            public function all_lectures(){
+                // $courses = $this->class_course_lectures->pluck('course_id');
+                return Lecture::whereIn('id',$this->class_course_lectures->pluck('lecture_id'))->get();
+                // return $this->hasManyThrough(Lecture::class,ClassCourseLecture::class,"lecture_id","id");
+            }
 
-        // Get all related lectues for the Sem
-        public function lectures_for($sem){ 
-            return $this->all_lectures()->where('semester_id',$sem);
+            // Get all related lectues for the Sem
+            public function lectures_for($sem){ 
+                return $this->all_lectures()->where('semester_id',$sem);
 
-            // $courses = $this->class_group_courses->pluck('course_id');
-            // return Lecture::where('semester_id',$sem)->whereIn('course_id',$courses)->get();
-        }
+                // $courses = $this->class_group_courses->pluck('course_id');
+                // return Lecture::where('semester_id',$sem)->whereIn('course_id',$courses)->get();
+            }
 
-        // Get Lectures for sem grouped by Week
-        public function grouped_lectures_for($sem){
-            $lectures = $this->lectures_for($sem)->sortBy('date');
+            // Get Lectures for sem grouped by Week
+            public function grouped_lectures_for($sem){
+                $lectures = $this->lectures_for($sem)->sortBy('date');
 
-            // Group by week
-            $groupedLectures = $lectures->groupBy(function ($lecture) {
-                // Get the start of the week (Sunday) for the lecture date
-                return Carbon::parse($lecture->date)->startOfWeek()->format('Y-m-d');
-            });
+                // Group by week
+                $groupedLectures = $lectures->groupBy(function ($lecture) {
+                    // Get the start of the week (Sunday) for the lecture date
+                    return Carbon::parse($lecture->date)->startOfWeek()->format('Y-m-d');
+                });
 
-            return $groupedLectures;
-        }
+                return $groupedLectures;
+            }
 
-        // Get all related upcoming lectues for the Sem
-        public function upcoming_lectures_for($sem){ 
-            $courses = $this->class_group_courses->pluck('course_id');
-            return Lecture::where('semester_id',$sem)->whereIn('course_id',$courses)->get();
-        }
+            // Get all related upcoming lectues for the Sem
+            public function upcoming_lectures_for($sem){ 
+                $courses = $this->class_group_courses->pluck('course_id');
+                return Lecture::where('semester_id',$sem)->whereIn('course_id',$courses)->get();
+            }
 
-    // Attendance
-        // Get Number of Students present for a lecture
-        public function attendees_for(Lecture $lecture){
-            // return $this->users;
-            return User::whereIn('id',$lecture->attendees()->pluck('id'))->get();
-            // return $lecture->attendees()->intersect($this->users);
-            // return $this->users->intersect($lecture->attendees());
-        }
+        // Attendance
+            // Get Number of Students present for a lecture
+            public function attendees_for(Lecture $lecture){
+                // return $this->users;
+                return User::whereIn('id',$lecture->attendees()->pluck('id'))->get();
+                // return $lecture->attendees()->intersect($this->users);
+                // return $this->users->intersect($lecture->attendees());
+            }
 
-        // Get number of students absent for a lecture
-        public function absentees_for(Lecture $lecture){
-            return User::whereIn('id',$lecture->absentees()->pluck('id'))->get();
+            // Get number of students absent for a lecture
+            public function absentees_for(Lecture $lecture){
+                return User::whereIn('id',$lecture->absentees()->pluck('id'))->get();
 
-        }
+            }
 
-    
-    // ClassGroup Course
+        
+        // ClassGroup Course
         // Get related classgroup course instance for a course for the current sem
        public function current_classgroup_course_instance_with(Course $course){
             $active_semester =  Semester::active_semester();
@@ -136,8 +139,19 @@ class ClassGroup extends Model
         }
 
 
+        // TIMETABLE COURSES
+        // Get timetable courses instance for the sem
+        public function timetable_courses_for($sem){
+            return TimetableCourse::whereIn('course_id',$this->courses_for($sem)->pluck('id'))->get();
+        }
+
+        // Get timetable courses for a particular day of the sem
+        public function timetable_scheduled_for($day, $sem){
+            return TimetableCourse::scheduled_for($day,$sem)->intersect($this->timetable_courses_for($sem));
+        }
 
 // FUNCTIONS
+    // self
     // slug_name
     public function slug_name(){
         return $this->name." - ".$this->year;
@@ -215,5 +229,11 @@ class ClassGroup extends Model
 
 
 // STATIC FUNCTIONS
+        // return a day and time that an array of classgroups can meet for the same course
+        public static function possible_meeting_periods(array $classgroups, $sem){
+            $timetable_courses_forSem = TimetableCourse::forSem($sem)->get();
+
+           
+        }
 
 }

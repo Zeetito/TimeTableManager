@@ -163,24 +163,28 @@
                                                         <div class="accordion-body collapse " id="panel-body-{{$count}}" data-parent="#accordion" style="">
                                                           
                                                           @php
-                                                            $days=[5,6,7,1,2,3,4];
+                                                            // Sunday = 1
+                                                            $days=[1,2,3,4,5,6,7];
                                                           @endphp
 
                                                           @foreach($days as $day)
                                                           
                                                           <div class="card card-border border-success">
                                                             <div class="card-header">
-                                                              {{date('l', mktime(0, 0, 0, 1, $day, 1970))}}
+                                                              {{-- The -2 Ensures that 1 = Sunday --}}
+                                                              {{date('l', mktime(0, 0, 0, -2, $day, now()->format('Y')))}}
                                                             </div>
 
                                                             <div class="card-body">
                                                               <div class="d-flex flex-row overflow-scroll">
                                                                   @foreach($lectures as $lecture)
-                                                                    @if( date('w',strtotime(($carbon)::create($lecture->date)->format('Y-m-d')))  == $day  )
+                                                                    {{-- The function below returns the numeric value of the date useing Sunday = 0 i.e plus one to match the above --}}
+                                                                    @if( date('w',strtotime(($carbon)::create($lecture->date)->format('Y-m-d'))) + 1  == $day  )
                                                                     <div class="border border-primary m-1 col-4">
                                                                       <span>Course: {{ $lecture->course->code }}</span> <br>
                                                                       <span>Time: {{ date('h:i A', strtotime($lecture->start_time)) }} - {{ date('h:i A', strtotime($lecture->end_time)) }}</span><br>
                                                                       <span>Venue: {{ $lecture->classroom->name }}</span><br>
+                                                                      {{-- <span>Venue: {{ $lecture->date }}</span><br> --}}
                                                                         
                                                                     </div>
                                                                     @endif

@@ -3,9 +3,13 @@
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Course;
+use App\Models\College;
+use App\Models\Faculty;
 use App\Models\Lecture;
 use App\Models\Semester;
+use App\Models\Classroom;
 use App\Models\ClassGroup;
+use App\Models\TimetableCourse;
 use App\Models\ClassGroupCourse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -29,53 +33,54 @@ Route::get('/', function () {
 });
 Route::get('/hello', function () {
 
+
+    $start_time = Carbon::createFromTimeString("08:00:00");
+    $end_time = Carbon::createFromTimeString("9:55:00");
+
+    return  round(($start_time->diffInMinutes($end_time))/60); 
+
+    return Course::find(44)->timetablecourses_for(6);
+
+    // return TimetableCourse::START_TIMES;
+
+    $class_occupied_periods = Classroom::periods_occupied([102,51,78,665,847],6); 
+    $daysOfTheWeek = [1,2,3,4,5];
+    $classroom_ids = $class_occupied_periods[0];
+    $classroom_occupied_days = $class_occupied_periods[1];
+    $occupied_start_times = $class_occupied_periods[2];
+    $occupied_end_times = $class_occupied_periods[3];
+
+    // return $occupied_start_times;
+    // assuming best_day = 3;
+    $classroom_occupied_days[2][3] = 3;
+    foreach($classroom_occupied_days as $index=>$day){
+        
+        if(in_array(3, array_diff($daysOfTheWeek, $day) )){
+            $best_classroom = $classroom_ids[$index];
+            $possible_best_start_times = array_diff(TimetableCourse::START_TIMES,$occupied_start_times[$index] );
+            $possible_best_end_times = array_diff(TimetableCourse::END_TIMES,$occupied_end_times[$index] );
+            // dd($possible_best_end_times);
+            break;
+        }else{
+            continue;
+        }
+    }
+
+    // return $possible_best_end_times;
+    // --Possible times secured
+
+
+    // Getting array of best times too
+
     
 
-    // return date('l', mktime(0, 0, 0, 1, 1, 1970));
+   
+// return TimetableCourse::forSem(6);
 
-    return ClassGroup::all()->random()->grouped_lectures_for(6);
+// return User::staff()->random()->staff_timetable_courses_for(6);
+// // return TimetableCourse::forSem(6);
+// return ClassGroup::find(1)->timetable_scheduled_for(1,6);
 
-    // return Lecture::getLecturesGroupedByWeek(6);
-
-    // foreach(Semester::all() as $semester){
-
-    //     // $startDate = Carbon::create($semester->start_date);
-    //     // $endDate = Carbon::create($semester->end_date);
-
-    //     // // Convert to timestamps
-    //     // $min = $startDate->timestamp;
-    //     // $max = $endDate->timestamp;
-
-    //     // // Generate a random timestamp between start and end dates
-    //     // $randomTimestamp = rand($min, $max);
-
-    //     // // Convert the random timestamp back to a Carbon date
-    //     // $randomDate = Carbon::createFromTimestamp($randomTimestamp)->format('Y-m-d');
-
-        
-
-    //     // // return $randomDate;
-
-    //     // $lectures = Lecture::forSem($semester->id);
-    //     // $count = 0;
-    //     // $rand = 3;
-    //     // foreach($lectures as $lecture){
-
-
-    //     //     if($count == $rand){
-    //     //         $rand = rand(1,3);
-    //     //         $count = 0;
-    //     //         $randomTimestamp = rand($min, $max);
-    //     //         $randomDate = Carbon::createFromTimestamp($randomTimestamp)->format('Y-m-d');
-
-    //     //     }else{
-    //     //         $lecture->date = $randomDate;
-    //     //         $lecture->save();
-    //     //         $count ++;
-    //     //     }
-
-    //     // }
-    // }
 
 });
 

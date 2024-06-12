@@ -13,12 +13,20 @@ return new class extends Migration
     {
         Schema::create('attendance_users', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('attendance_id');
-            $table->foreignId('user_id');
-            $table->unsignedBigInteger('marked_by');
+            $table->foreignId('attendance_id')
+            ->constrained()
+            ->onUpdate('cascade')
+            ->onDelete('cascade');
+            
+            $table->foreignId('user_id')
+            ->constrained()
+            ->onUpdate('cascade')
+            ->onDelete('cascade');
+
+            $table->unsignedBigInteger('marked_by')->nullable();
             $table->timestamps();
 
-            $table->foreign('marked_by')->references('id')->on('users');
+            $table->foreign('marked_by')->references('id')->on('users')->onDelete('set null');
         });
     }
 

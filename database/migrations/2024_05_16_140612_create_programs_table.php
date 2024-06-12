@@ -14,9 +14,21 @@ return new class extends Migration
         Schema::create('programs', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('college_id');
-            $table->foreignId('faculty_id')->nullable();
-            $table->foreignId('department_id')->nullable();
+            $table->foreignId('college_id')->nullable()
+                    ->constrained()
+                    ->onUpdate('cascade')
+                    ->onDelete('set null');
+
+            $table->foreignId('faculty_id')->nullable()
+                    ->constrained()
+                    ->onUpdate('cascade')
+                    ->onDelete('set null');
+
+            $table->foreignId('department_id')->nullable()
+                    ->constrained()
+                    ->onUpdate('cascade')
+                    ->onDelete('set null');
+
             $table->string('type');
             $table->integer('span')->nullable();
             $table->timestamps();

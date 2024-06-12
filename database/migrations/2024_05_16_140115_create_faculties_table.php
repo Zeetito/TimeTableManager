@@ -14,7 +14,11 @@ return new class extends Migration
         Schema::create('faculties', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('college_id');
+            $table->foreignId('college_id')
+                    ->constrained()
+                    ->onUpdate('cascade')
+                    ->onDelete('set null');
+
             $table->foreignId('location')->nullable();
             $table->timestamps();
         });

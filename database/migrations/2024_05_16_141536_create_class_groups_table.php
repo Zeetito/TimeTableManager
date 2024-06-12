@@ -15,7 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->integer('year');
-            $table->foreignId('program_id');
+
+            $table->foreignId('program_id')
+                    ->constrained()
+                    ->onUpdate('cascade')
+                    ->onDelete('cascade');
+                    
             $table->date('start_year');
             $table->date('end_year');
             $table->timestamps();

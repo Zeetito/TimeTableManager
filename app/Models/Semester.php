@@ -18,16 +18,21 @@ class Semester extends Model
         'is_active',
     ];
 
-    // RELATIONSHIPS
+// RELATIONSHIPS
     // Get the related Academic year
     public function academicYear(){
         return $this->belongsTo(AcademicYear::class);
     }
 
-    // FUNCTIONS
+// FUNCTIONS
     // Get the academic name for a semester
     public function academic_name(){
         return $this->academicYear->start_year."-".$this->academicYear->end_year." Sem".$this->name;
+    }
+
+    // Get the number of weeks in a semester
+    public function get_number_of_weeks(){
+        
     }
 
 
