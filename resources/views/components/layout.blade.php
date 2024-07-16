@@ -168,7 +168,7 @@
             <ul class="sidebar-menu">
                 <li class="menu-header">Dashboard</li>
                 <li class="active">
-                <a href="index.html"><i class="ion ion-speedometer"></i><span>Dashboard</span></a>
+                <a href="{{route('home')}}"><i class="ion ion-speedometer"></i><span>Dashboard</span></a>
                 </li>
 
                 <li class="menu-header">Group</li>
@@ -189,7 +189,7 @@
                 <li>
                 <a href="#" class="has-dropdown"><i class="ion ion-flag"></i><span>Group B</span></a>
                 <ul class="menu-dropdown">
-                    <li><a href="fontawesome.html"><i class="ion ion-ios-circle-outline"></i> Lecture</a></li>
+                    <li><a href="{{route('timetable_info',['semester'=>App\Models\Semester::active_semester()])}}"><i class="ion ion-ios-circle-outline"></i> Timetable(s)</a></li>
                     <li><a href="flag.html"><i class="ion ion-ios-circle-outline"></i> Flag</a></li>
                 </ul>
                 </li>

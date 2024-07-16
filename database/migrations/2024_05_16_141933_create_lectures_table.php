@@ -19,6 +19,7 @@ return new class extends Migration
                     ->onDelete('cascade');
 
             $table->foreignId('user_id')//Lecturer
+                    ->nullable()
                     ->constrained()
                     ->onUpdate('cascade')
                     ->onDelete('set null');
@@ -36,6 +37,7 @@ return new class extends Migration
             $table->date('date')->nullable();
 
             $table->foreignId('classroom_id')->nullable()
+                    ->nullable()
                     ->constrained()
                     ->onUpdate('cascade')
                     ->onDelete('set null');

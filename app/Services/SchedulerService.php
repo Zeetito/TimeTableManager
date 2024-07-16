@@ -1,123 +1,244 @@
 <?php
+// 1st
 namespace App\Services;
 
 use Carbon\Carbon;
 use App\Models\Course;
+use App\Models\User;
 use App\Models\Semester;
 use App\Models\Classroom;
 use App\Models\ClassGroup;
 use App\Models\TimetableCourse;
 use Illuminate\Support\Collection;
+use Illuminate\Database\QueryException;
 
 
 
 class SchedulerService
 {
+    // 2nd
     // Shcedule timetable for the entire semester
-    public function scheduleTimetable_forSem(Semester $semester)
-    {
+    public static function scheduleTimetable_forSem(Semester $semester ){
+
+
+          // Increase maximum execution time to 5 minutes
+          ini_set('max_execution_time', 3600); // 1 Hour
+          ini_set('memory_limit', '512M'); // Sets the memory limit to 512 MB
+
+        // Creating an array unassigned, to keep track of the number of unassigned courses after each iteration to 
+        // know a value repeated twice which means the code cannot allocate any suitable variables for the remaingin courses
+        $unassigned = [];
+        // Stash is a variable that determines whether or not the courses should be stashed as they are if suitable allocations are not found
+        $stash = false;
+
         $sem =  $semester->id;
 
-        // 1. For each Semester and Foreach course, check if the course has students offering for that sem
-        foreach(Course::all() as $course){
-            $students = $course->students_forSem($sem);
-            $classgroups = $course->class_groups_for($sem);
-            $classgroup_ids = $classgroups->pluck('id');
-            $class_size = $students->count();
-            $credit_hour = $course->initial_allowed_credit_hour();            
+        // Get the courses that are not fully assigned
+        $not_fully_assigned_query = Course::not_fully_assigned($sem);
 
-            // Check if there are students for this course this year
-            if($students->count() == 0){
-                $classrooms = $this->get_best_classroom_for_course($course,$students,$class_size);
-            }else{
-                // If not, move on to the next Course
-                continue;
-            }
-         
-            // Classrooms Secured
 
-            // Check for which of the classrooms are free and assign at a particular point in time and assign the class
-            $class_occupied_periods = Classroom::periods_occupied($classrooms->pluck('id'),$sem);
 
-            // Assign the best day for the course to a variable
-            $best_day = $this->get_best_day_for_course($classgroup_ids,$sem);
+        // If all courses are fully assigned and or stashed
+        if($not_fully_assigned_query->count() == 0){
 
-            // Assign the best time for the course, considering the classrooms and and classgroups and Lecturers
-            $best_times =  $this->get_best_time_for_course($course, $class_occupied_periods,$best_day,$sem,$classgroup_ids);
+            // Check if the number of unassigned courses is greater than Zero
+            // Our work here is done
+        }else{
+            // Check if the number of unassigned has repeated after another iteration of the function
+            //That would mean the code is not able to allocate a suitable time, day or classroom for the course
+            if($not_fully_assigned_query->count() == end($unassigned)){
+                // Global variable stash true, would sotre the instances as they are
+                $stash = true;
             
-            // Assign value to variables
-            $best_start_time = $best_times[0];
-            $best_end_time = $best_times[1];
-            $best_classroom = $best_time[2];
-
-
-
-            // Create A Timetable course INstance with the collected variables
-            $instance = new TimetableCourse;
-            $instance->course_id = $course->id;
-            $instance->semester_id = $sem;
-            $instance->day = $best_day;
-            $instance->duration = $credit_hour;
-            $instance->classroom_id = $best_classroom;// integer
-            $instance->start_time = $best_start_time;
-            $instance->end_time = $best_end_time;
-            $instance->user_id = $course->lecturers()->count > 1 ? null : $course->lecturers()->first()->id;
-
-            $instance->save();
-
-
-
+            }else{
+                $unassigned[] = $not_fully_assigned_query->count();
+            }
         }
 
+    
+        // Check if there're courses that are not fully assigned in the system
 
-    }
+        // For each Semester and Foreach course, check if the course has students offering for that sem
 
-    // Functions
-    // Return day which works for a the classgroups and the Lecturer(s) of a particular course
-    public function get_best_day_for_course(array $classgroup_ids,$sem){
-        // Foreach WeekDay,  Monday = 1, sunday =0 using Carbon::createFormDate(y,m,d)
-        for($i = 1; $i<=5; $i++){
-            // First Check if any of the involved classgroups has exceeded 8 hours for the day
-            $day_instances = TimetableCourse::scheduled_for($i,$sem);
-            $day_is_okay = false;
+        // Using Chunk Method
+        // $not_fully_assigned_query->chunk(5, function($not_fully_assigned) {
+            foreach($not_fully_assigned_query->take(24) as $course){
+                $students = $course->students_forSem($sem);
+                $classgroups = $course->class_groups_for($sem);
+                $classgroup_ids = $classgroups->pluck('id')->toArray();
+                $class_size = $students->count();
+                $credit_hour = $course->allowed_credit_hour($sem);
+                
+                $lecturers_id = $course->course_lecturers->pluck('id')->toArray();
 
-            foreach($classgroup_ids as $classgroup_id){
-                if(ClassGroup::find($classgroup_id)->timetable_scheduled_for($i,$sem)->pluck('duration')->sum() > 6 ){
-                    $day_is_okay = false;
-                    break; //Break out of the foreach Loop
+                // Check if there are students for this course this year
+                if($students->count() > 0){
+                    $classrooms = self::get_best_classrooms_for_course($course,$students,$class_size);
+                    $classrooms_ids = $classrooms->pluck('id')->toArray();
                 }else{
-                    // If a day fits
-                    $day_is_okay = true;
-                    $day = $i;
-                    break; // Exit the foreach classgroup loop for number of hours
+                    // If not, move on to the next Course
+                    continue;
                 }
-            }
 
-             // If the day is not okay, skip to the next day
-            if (!$day_is_okay) {
-                continue; // Move on to next day
-            }else{
-                // if yes
-                // Check if Day is Okay for lecturer(s)
-                // Check foreach of the Lecturer(s) of the course if the day is favorable
-                    foreach($course->course_lecturers as $lecturer){
-                        if($lecturer->staff_timetable_schedule_for($i,$sem)->pluck('duration')->sum() > 6 ){
-                            $day_is_okay = false;
-                            break;
-                        }else{
-                            $day_is_okay = true;
-                            $day = $i;
-                            break;
+            
+
+               
+                
+                // --------------------------------------------------------
+                $best_day = null;
+                $best_classroom = null;
+                // Forall the Days of the Week
+                for($i = 1; $i<=5; $i++){
+                    // All timetable courses instances for the day
+                    $timetable_courses_for_day = TimetableCourse::scheduled_for($i,$sem);
+                    
+                    // Get the related timetablecourse for the related classgroups and if feasible or not
+                    $timetable_courses_for_classgroups = ClassGroup::timetable_courses_for_classgroups($classgroup_ids,$i,$sem);
+                    
+                    // Get the related timetablecourse for the related Lecturers
+                    $timetable_course_for_lecturers =  User::timetable_courses_for_lecturers($lecturers_id,$i,$sem);
+
+
+                    // if any of the classgroup or lectureres instances for that day exceeds 6 hours move to next day
+                    if($timetable_courses_for_classgroups[0] == true || $timetable_course_for_lecturers[0] == true){
+                        // Move to next day
+                        continue;
+                    }
+
+
+
+                    // It it passes the Duration Test,
+                    $best_day = $i;
+                    
+                    // Merge Classgroup and Lecturers timetablecourse
+                    $merged = $timetable_courses_for_classgroups[1]->merge($timetable_course_for_lecturers[1])->unique();
+
+                    
+                    // Get the occupied start and end times 
+                    $merged_number = $merged->count();
+
+                    // Ensuring that none of the times overlaps
+                    $start_times = $merged->pluck('start_time')->unique();
+                    $end_times = $merged->pluck('end_time')->unique();
+
+                    $start_times_count = $start_times->count();
+                    $end_times_count = $end_times->count();
+
+                    // Check for overlapping times
+                    if($start_times_count != $merged_number || $end_times_count !=  $merged_number){
+                        // Move on to the Next Day
+                        continue;
+                    }
+
+                    // dd([[[$start_times_count,$merged_number],[$end_times_count,$merged_number]]]);
+
+                    // If the overlapping test is passed
+                    $available_start_times = array_diff(TimetableCourse::START_TIMES,$start_times->toArray());
+                    $available_end_times = array_diff(TimetableCourse::END_TIMES,$end_times->toArray());
+
+                    $best_start_time = null;
+                    $best_end_time = null;
+                    $time_is_okay = false;
+
+
+                    // Loop through the times to find the most fitting
+                    foreach($available_start_times as $start_time){
+                        
+                        foreach($available_end_times as $end_time){
+                            $time_start_time = Carbon::createFromFormat('H:i:s', $start_time);
+                            $time_end_time = Carbon::createFromFormat('H:i:s', $end_time);
+
+
+                            if($time_start_time->lessThan($time_end_time) && round(($time_start_time->diffInMinutes($time_end_time))/60) == $credit_hour  ){
+                                $best_start_time = $start_time;
+                                $best_end_time = $end_time;
+                                $time_is_okay = true;
+                                break 2;
+                                // End Foreach: Search
+                            }else{
+                                // Skip to next end time
+                                continue;
+                            }
+                            
                         }
                     }
+
+                    if($time_is_okay == false){
+                        continue;
+                        // Move to Next Day;
+                    }
+
+
+                    // Best Start and End times gotten
+
+                    // Get the best classrooms available at these times
+                    $available_classrooms = Classroom::available_besides_time($classrooms_ids, $best_start_time,$best_end_time,$best_day,$sem);
+
+                    $best_classroom =  $available_classrooms[0];
+
+                }
+
+                // dd($timetable_course_for_lecturers);
+
+
+                // ----------------------------------------------------------
+
+                // dd([$best_start_time, $best_end_time, $best_classroom, $best_day]);
+                // if none is null or stash is true, it'd create the instance with the variables (null, inclusive)
+                if($best_start_time == null || $best_end_time == null || $best_classroom == null || $best_day == null){
+                    if($stash == false){
+                        continue;
+                    }
+                    // Else, Stash
+                }
+
+
+                // Create A Timetable course INstance with the collected variables
+                $instance = new TimetableCourse;
+                $instance->course_id = $course->id;
+                $instance->semester_id = $sem;
+                $instance->day = $best_day;
+                $instance->duration = $credit_hour;
+                $instance->classroom_id = $best_classroom;// integer
+                $instance->start_time = $best_start_time;
+                $instance->end_time = $best_end_time;
+                $instance->user_id = $course->lecturers()->count() > 1 ? null : $course->lecturers()->first()->id;
+                // dd($instance);
+                
+                try {
+                    // Attempt to insert a new record
+                    $instance->save();
+                   
+                } catch (QueryException $e) {
+                    // Check if the exception is due to a unique constraint violation
+                    if ($e->getCode() == 23000) {
+                        continue;
+                    } else {
+                        // Handle other types of database exceptions
+                        echo "An unexpected database error occurred: " . $e->getMessage();
+                    }
+                }
+                
+
+
+
             }
+        // });
 
+        // Exit the function if Stash is True since all unallocated courses are stashed
+        if($stash == true){
+            return;
         }
+        echo"here ";
+        return self::scheduleTimetable_forSem($semester);
 
-        return $day;
     }
+
+
+    // Functions
+
     // Get best classroom for course
-    public function get_best_classroom_for_course(Course $course,$students,$class_size){
+    public static function get_best_classrooms_for_course(Course $course,$students,$class_size){
             // Check for Classroom in the department / faculty or college 
             // of the course to find a classroom capable of accomodatiing the class size
             $classrooms = $course->department->classrooms->where('reg_cap', '>=', $class_size);
@@ -141,87 +262,7 @@ class SchedulerService
 
     }
 
-    // Get best time for the course WITH THE BEST CLASSROOMS AS WELL
-    public function get_best_time_for_course(Course $course,array $class_occupied_periods,$best_day,$sem,$classgroup_ids){
-        // Days of the Week
-        $daysOfTheWeek = [1,2,3,4,5];
-        // First Get the Classroom out of the array, whose free days coincide with the best day
-        $classroom_ids = $class_occupied_periods[0];
-        $classroom_occupied_days = $class_occupied_periods[1];
-        $classroom_start_times = $class_occupied_periods[2];
-        $classroom_end_times = $class_occupied_periods[3];
-
-        // Check for each of the freedays of a classroom
-        foreach($classroom_occupied_days as $index=>$day){
-            
-            // Check if the best day is in the free days
-            if(in_array($best_day, array_diff($daysOfTheWeek, $day) )){
-                $best_classroom = $classroom_ids[$index];
-                $possible_best_start_times = array_diff(TimetableCourse::START_TIMES,$occupied_start_times[$index] );
-                $possible_best_end_times = array_diff(TimetableCourse::END_TIMES,$occupied_end_times[$index] );
-                break;
-            }else{
-                continue;
-            }
-        }
-
-        // Check now each of the possible start times which one is best fitting
-        $course_timetable_courses = $course->timetablecourses_for($sem)->where('day',$best_day);
-        foreach($possible_best_start_times as $start_time){
-            
-            // Compare each start time against end time
-            foreach($possible_best_end_times as $end_time){
-                
-                if($course_timetable_courses->whereBetween('start_time',[$start_time,$end_time])->count() > 0){
-                    $start_time = Carbon::createFromTimeString($start_time);
-                    $end_time = Carbon::createFromTimeString($end_time);
-
-                    if(round(($start_time->diffInMinutes($end_time))/60) == $course->initial_allowed_credit_hour()){
-                        $best_start_time = $start_time;
-                        $best_end_time = $end_time;
-
-                            // Check if the times are okay for the classgroups involved
-                            $time_is_okay = false;
-                            foreach($classgroup_ids as $classgroup_id){
-                                if(ClassGroup::find($classgroup_id)->timetable_scheduled_for($best_day,$sem)->whereBetween('start_time',[$start_time,$end_time])->whereBetween('end_time',[$start_time,$end_time])->count() > 0){
-                                    $time_is_okay = false;
-                                    break;
-                                }else{
-                                    $time_is_okay = true;
-
-                                    // Check if the time is okay for the lecturers
-                                    foreach($course->course_lecturers as $lecturer){
-                                        if(staff_timetable_schedule_for($best_day,$sem)->whereBetween('start_time',[$best_end_time,$best_end_time])->whereBetween('end_time',[$best_end_time,$best_end_time])->count() > 0){
-                                            $time_is_okay = false;
-                                            break 2;
-                                        }
-                                    }
-
-                                }
-                            }
-
-                        // break;
-                    }
-
-                }
-
-                if($time_is_okay){
-                    break;
-                }
-                
-            }
-
-            if($best_start_time && $best_end_time){
-                break;
-            }
-
-        }
-
-        // return the start and endtimes with the best classroom
-        return [$best_start_time,$best_end_time,$best_classroom];
-
-
-    }
     
+
 
 }

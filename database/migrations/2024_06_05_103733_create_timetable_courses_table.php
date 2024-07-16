@@ -32,9 +32,9 @@ return new class extends Migration
                     ->onUpdate('cascade')
                     ->onDelete('set null');
 
-            $table->time('start_time');
+            $table->time('start_time')->nullable();
 
-            $table->time('end_time');
+            $table->time('end_time')->nullable();
 
             $table->foreignId('user_id')->nullable()
                     ->constrained()
@@ -43,6 +43,17 @@ return new class extends Migration
             
             
             $table->timestamps();
+
+            // Unique contraint on Same Sem, Day ,Classroom and Startime
+            $table->unique(['semester_id','day','classroom_id','start_time'],'course_day_start');
+            
+            $table->unique(['semester_id','day','classroom_id','end_time'],'course_day_end');
+
+            // Unique contraint on Same Sem, Day ,Lecturer and Startime
+            $table->unique(['semester_id','day','user_id','start_time'],'course_day_user_start');
+            
+            $table->unique(['semester_id','day','user_id','end_time'],'course_day_user_end');
+
         });
     }
 

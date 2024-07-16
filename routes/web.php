@@ -14,7 +14,9 @@ use App\Models\ClassGroupCourse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassGroupController;
+use App\Http\Controllers\TimetableCourseController;
 use App\Http\Controllers\ClassGroupCourseController;
 
 /*
@@ -33,56 +35,97 @@ Route::get('/', function () {
 });
 Route::get('/hello', function () {
 
+    return TimetableCourse::clashing(6);
 
-    $start_time = Carbon::createFromTimeString("08:00:00");
-    $end_time = Carbon::createFromTimeString("9:55:00");
+    return Course::where('id','1361')->first()->available_days(6);
+    return TimetableCourse::where('course_id','552')->get();
 
-    return  round(($start_time->diffInMinutes($end_time))/60); 
+    return date('l', strtotime("Sunday +{5} days"));
 
-    return Course::find(44)->timetablecourses_for(6);
+    return TimetableCourse::START_TIMES[array_rand(TimetableCourse::START_TIMES)];
 
-    // return TimetableCourse::START_TIMES;
-
-    $class_occupied_periods = Classroom::periods_occupied([102,51,78,665,847],6); 
-    $daysOfTheWeek = [1,2,3,4,5];
-    $classroom_ids = $class_occupied_periods[0];
-    $classroom_occupied_days = $class_occupied_periods[1];
-    $occupied_start_times = $class_occupied_periods[2];
-    $occupied_end_times = $class_occupied_periods[3];
-
-    // return $occupied_start_times;
-    // assuming best_day = 3;
-    $classroom_occupied_days[2][3] = 3;
-    foreach($classroom_occupied_days as $index=>$day){
-        
-        if(in_array(3, array_diff($daysOfTheWeek, $day) )){
-            $best_classroom = $classroom_ids[$index];
-            $possible_best_start_times = array_diff(TimetableCourse::START_TIMES,$occupied_start_times[$index] );
-            $possible_best_end_times = array_diff(TimetableCourse::END_TIMES,$occupied_end_times[$index] );
-            // dd($possible_best_end_times);
-            break;
-        }else{
-            continue;
-        }
-    }
-
-    // return $possible_best_end_times;
-    // --Possible times secured
-
-
-    // Getting array of best times too
-
-    
-
-   
-// return TimetableCourse::forSem(6);
-
-// return User::staff()->random()->staff_timetable_courses_for(6);
-// // return TimetableCourse::forSem(6);
-// return ClassGroup::find(1)->timetable_scheduled_for(1,6);
+    return ClassGroup::ug_classgroups()->random();
 
 
 });
+
+
+// CLASSROOMS
+    // View Clashing Classrooms
+    Route::get('clashing_classrooms/{semester}',[ClassroomController::class,'clashing'])
+    ->middleware('auth')
+    ->name('clashing_classrooms');
+
+
+// TIMETABLE COURSE
+    // Timetable Landing page
+    Route::get('timetable_info/{semester}',[TimetableCourseController::class,'info'])
+    ->middleware('auth')
+    ->name('timetable_info');
+
+    // Editing Timetable Course Instance
+    Route::get('edit_timetable_course/{timetable_course}',[TimetableCourseController::class,'edit'])
+    ->middleware('auth')
+    ->name('edit_timetable_course');
+
+    // Update Timetable Course
+    Route::put('update_timetable_course/{timetable_course}',[TimetableCourseController::class,'update'])
+    ->middleware('auth')
+    ->name('update_timetable_course');
+
+
+
+
+
+
+    // Generate Timetable
+    Route::get('generate_timetable/{semester}',[TimetableCourseController::class,'generate_timetable'])
+    ->middleware('auth')
+    ->name('generate_timetable');
+
+    // Check if a timetable generate is in session
+    Route::get('timetable_generation_active',[TimetableCourseController::class,'timetable_generation_active'])
+    ->middleware('auth')
+    ->name('timetable_generation_active');
+
+    // Get Percentage allocation completion
+    Route::get('get_percentage_allocation_complete/{semester}',[TimetableCourseController::class,'get_percentage_allocation_complete'])
+    ->middleware('auth')
+    ->name('get_percentage_allocation_complete');
+
+    // Get the Number of fully allocated courses for the sem
+    Route::get('get_fully_allocated_courses_number/{semester}',[TimetableCourseController::class,'get_fully_allocated_courses_number'])
+    ->middleware('auth')
+    ->name('get_fully_allocated_courses_number');
+
+    // Get total number courses being offered for the sem
+    Route::get('get_courses_being_offered_number/{semester}',[TimetableCourseController::class,'get_courses_being_offered_number'])
+    ->middleware('auth')
+    ->name('get_courses_being_offered_number');
+
+    // Get total number courses partially allocated for the sem
+    Route::get('get_partially_allocated_courses_number/{semester}',[TimetableCourseController::class,'get_partially_allocated_courses_number'])
+    ->middleware('auth')
+    ->name('get_partially_allocated_courses_number');
+
+    // Get the number of unallocated courses for the sem
+    Route::get('get_unallocated_courses_number/{semester}',[TimetableCourseController::class,'get_unallocated_courses_number'])
+    ->middleware('auth')
+    ->name('get_unallocated_courses_number');
+    
+    // Get available times for timetable_course
+    Route::get('get_available_times_for_timetable_course/{timetable_course}',[TimetableCourseController::class,'get_available_times_for_timetable_course'])
+    ->middleware('auth')
+    ->name('get_available_times_for_timetable_course');
+    
+    // Get available_classrooms_for_timetable_course
+    Route::get('get_available_classrooms_for_timetable_course/{timetable_course}/{day}',[TimetableCourseController::class,'get_available_classrooms_for_timetable_course'])
+    ->middleware('auth')
+    ->name('get_available_classrooms_for_timetable_course');
+    
+
+
+
 
 
 // CLASSGROUP

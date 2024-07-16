@@ -12,24 +12,27 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // $this->call(AcademicYearSeeder::class);
-        // $this->call(SemesterSeeder::class);
+        //     $this->call(AcademicYearSeeder::class);
+        //     $this->call(SemesterSeeder::class);
 
-        // $this->call(CollegeSeeder::class);
-        // $this->call(FacultySeeder::class);
-        // $this->call(DepartmentSeeder::class);
-        // $this->call(ProgramSeeder::class);
-// ----
-        // $this->call(CourseSeeder::class);
-        // $this->call(ClassroomSeeder::class);
+        //   $this->call(CollegeSeeder::class);
+        //   $this->call(FacultySeeder::class);
+        //   $this->call(DepartmentSeeder::class);
+        //   $this->call(ProgramSeeder::class);
+
+        //   $this->call(CourseSeeder::class);
+        //   $this->call(ClassroomSeeder::class);
         
         // $this->call(ClassGroupSeeder::class);
         // $this->call(UserSeeder::class);
 
         // $this->call(ClassGroupCourseSeeder::class);
+        // $this->call(CourseLecturerSeeder::class);
         // $this->call(LectureSeeder::class);
         // $this->call(ClassGroupCourseLectureSeeder::class);
         // $this->call(AttendanceSeeder::class);
         // $this->call(AttendanceUserSeeder::class);
+        
+        // $this->call(TimetableCourseSeeder::class);
     }
 }

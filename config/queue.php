@@ -71,6 +71,15 @@ return [
             'after_commit' => false,
         ],
 
+        // Other configurations...
+
+        'worker' => [
+            'timeout' => env('QUEUE_WORKER_TIMEOUT', 3600),
+            'sleep' => env('QUEUE_WORKER_SLEEP', 3),
+            'tries' => env('QUEUE_WORKER_TRIES', 3),
+            'memory' => env('QUEUE_WORKER_MEMORY', 512),
+        ],
+
     ],
 
     /*

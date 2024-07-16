@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('college_id')
+                    ->nullable()
                     ->constrained()
                     ->onUpdate('cascade')
                     ->onDelete('set null');

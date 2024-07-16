@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\Semester;
 use App\Models\ClassGroup;
 use Illuminate\Http\Request;
+use App\Models\TimetableCourse;
 
 class ClassGroupController extends Controller
 {
@@ -19,6 +20,9 @@ class ClassGroupController extends Controller
     // Show single ClassGroup
     public function show(ClassGroup $classgroup){
         $semester = Semester::active_semester();
-        return view('admin.classgroup.show',['classgroup'=>$classgroup,'semester'=>$semester,'carbon'=>Carbon::class]);
+        // return 
+        // return $classgroup->timetable_courses_for(6)->where('day',2)->get();
+        $start_times = TimetableCourse::START_TIMES;
+        return view('admin.classgroup.show',['classgroup'=>$classgroup,'semester'=>$semester,'carbon'=>Carbon::class, 'start_times'=>$start_times ]);
     }
 }

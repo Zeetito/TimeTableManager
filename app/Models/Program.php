@@ -24,4 +24,16 @@ class Program extends Model
     public function classgroups(){
         return $this->hasMany(ClassGroup::class);
     }
+
+
+    // STATIC FUNCTIONS
+    // Get postGraduate programs
+    public static function pg(){
+        return self::where('type','pg');
+    }
+
+    // Get undergraduage programs
+    public static function ug(){
+        return self::where('type','ug');
+    }
 }

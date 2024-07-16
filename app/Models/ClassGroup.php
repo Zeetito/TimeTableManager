@@ -142,12 +142,16 @@ class ClassGroup extends Model
         // TIMETABLE COURSES
         // Get timetable courses instance for the sem
         public function timetable_courses_for($sem){
-            return TimetableCourse::whereIn('course_id',$this->courses_for($sem)->pluck('id'))->get();
+            return TimetableCourse::whereIn('course_id',$this->courses_for($sem)->pluck('id'));
         }
 
         // Get timetable courses for a particular day of the sem
         public function timetable_scheduled_for($day, $sem){
-            return TimetableCourse::scheduled_for($day,$sem)->intersect($this->timetable_courses_for($sem));
+
+            $instances_id =  TimetableCourse::scheduled_for($day,$sem)->get()->intersect($this->timetable_courses_for($sem)->get())->pluck('id');
+            // $instances_id =  $this->timetable_courses_for($sem)->where('day',$day)->pluck('id');
+
+            return TimetableCourse::whereIn('id',$instances_id);
         }
 
 // FUNCTIONS
@@ -234,6 +238,36 @@ class ClassGroup extends Model
             $timetable_courses_forSem = TimetableCourse::forSem($sem)->get();
 
            
+        }
+
+        // Return timetable courses shcedueled for a day for an array of classgroups
+        public static function timetable_courses_for_classgroups(array $classgroup_ids, $day, $sem){
+            $exceeds = false;
+            $results = (new TimetableCourse)->newCollection();
+            foreach ($classgroup_ids as $classgroup){
+                $targets = Classgroup::find($classgroup)->timetable_scheduled_for($day,$sem)->get();
+
+                // Check if any of the classgroups is totally occupied that day
+                if ($targets->pluck('duration')->sum() > 6){
+                    $exceeds = true;
+                }
+
+
+                $results =  $results->merge($targets);
+            }
+
+            return [$exceeds,$results];
+        }
+
+
+        // Get all postGraduate classgroups
+        public static function pg_classgroups(){
+            return self::whereIn('program_id',Program::pg()->pluck('id'))->get();
+        }
+
+        // Get all undergraduage Classgroup
+        public static function ug_classgroups(){
+            return self::whereIn('program_id',Program::ug()->pluck('id'))->get();
         }
 
 }

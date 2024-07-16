@@ -20,8 +20,8 @@ class UserSeeder extends Seeder
         User::create([
             'username' => 'student',
             'firstname' => 'Student-John',
-            'lastname' => '',
-            'othername' => 'Student-Doe',
+            'lastname' => 'Student-Doe',
+            'othername' => '',
             'gender' => 'm',
             'identity_number' => '200000000',
             'index_number' => '100000000',
@@ -54,7 +54,8 @@ class UserSeeder extends Seeder
         
      
 
-        User::factory()->count(350)->staff()->create();
-        User::factory()->count(25000)->student()->create();
+        User::factory()->count(5500)->staff()->create();
+        User::factory()->count(3000)->pg_student()->create();
+        User::factory()->count(85000)->ug_student()->create();
     }
 }

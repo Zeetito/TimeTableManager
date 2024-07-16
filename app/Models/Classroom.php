@@ -49,9 +49,19 @@ class Classroom extends Model
         }
 
     // TIME TABLE COURSE
+
+        // Get all related timetable_courses
+        public function timetable_courses(){
+            return $this->hasMany(TimetableCourse::class);
+        }    
+
         // Get all related time table course for the sem
         public function timetable_courses_for_sem($sem){
-            return $this->hasMany(TimetableCourse::class)->where('semester_id',$sem)->get();
+            return $this->hasMany(TimetableCourse::class)->where('semester_id',$sem);
+        }
+
+        public function timetable_schedule_for($day,$sem){
+            return $this->timetable_courses_for_sem($sem)->where('day',$day);
         }
 
 // FUNCTIONS
@@ -83,6 +93,7 @@ class Classroom extends Model
         // Get the related timeTable Course instances
         $time_table_instances = TimetableCourse::forSem($sem);
 
+
         // Get the times and days that the classes are occupied
         $classroom_days = [];
         $classroom_start_times = [];
@@ -98,24 +109,50 @@ class Classroom extends Model
                 
                 // Check for each of the instances and store the day and times in an array
                 foreach($time_table_instances->where('classroom_id',$classroom_id)->get() as $instance){
-                    $day[] =  $instance->day;
+                    $days[] =  $instance->day;
                     $start_times[] = $instance->start_time;
                     $end_times[] = $instance->end_time;
+                    // dd($day);
                 }
 
 
             }else{
                 // If no occupied instance exists, 
                 $days[] = null;
-                $times[] = null;
+                $start_times[] = null;
+                $end_times[] = null;
             }
                 // the subarrays are store in  nested arrays representing each of the classes
                 $classroom_days[] = $days;
                 $classroom_start_times[] = $start_times;
                 $classroom_end_times[] = $end_times;
+
+                // dd($classroom_days);
         }
 
         return([$classroom_ids, $classroom_days,$classroom_start_times,$classroom_end_times]);
+    }
+
+    // Get classrooms among an array available for a certain given times
+    public static function available_besides_time(array $classroom_ids,$best_start_time,$best_end_time,$day,$sem){
+      $classrooms = [];
+      
+      foreach($classroom_ids as $classroom_id){
+        // Check if it has a timetablecourse_INstance that starts or ends with the given times
+        $targets = Classroom::find($classroom_id)->timetable_schedule_for($day,$sem);
+        // $targets = TimetableCourse::where('classroom_id',$classroom_id)->where('day',$day)->where('semester_id',$sem)->where('start_time',$best_start_time)->orWhere('end_time',$best_end_time);
+        // dd($day);
+        if($targets->exists() == true && $targets->where('start_time',$best_start_time)->exists() || $targets->where('end_time', $best_end_time)->exists()){
+            continue;
+            
+        }else{
+            $classrooms[] = $classroom_id;
+        }
+      }
+
+      return $classrooms;
+
+
     }
 
 

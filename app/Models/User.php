@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\User;
 use App\Models\Course;
 use App\Models\Lecture;
 use App\Models\ClassGroup;
@@ -170,7 +171,7 @@ class User extends Authenticatable
 
             // Get staff timetable schedule for a day of the week of a sem
             public function staff_timetable_schedule_for($day,$sem){
-                return $this->staff_timetable_courses_for($sem)->where('day',$day)->get();
+                return $this->staff_timetable_courses_for($sem)->where('day',$day);
             }
 
     // FUNCTIONS
@@ -189,6 +190,24 @@ class User extends Authenticatable
                                 ->whereBetween('start_time',[$start_time, $end_time])
                                 ->WhereBetween('end_time',[$start_time, $end_time]);
                 })->get();
+            }
+
+            // Return timetable courses shcedueled for a day for an array of lecturers
+            public static function timetable_courses_for_lecturers(array $lecturer_ids, $day, $sem){
+                $exceeds = false;
+                $results = (new TimetableCourse)->newCollection();
+                foreach ($lecturer_ids as $lecturer){
+                    $targets = User::find($lecturer)->staff_timetable_schedule_for($day,$sem)->get();
+
+                    // Check if any of the classgroups is totally occupied that day
+                        if ($targets->pluck('duration')->sum() > 6){
+                            $exceeds = true;
+                        }
+                        
+                    $results =  $results->merge($targets);
+                }
+
+                return [$exceeds,$results];
             }
 
 }

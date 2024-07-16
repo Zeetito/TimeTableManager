@@ -46,9 +46,9 @@ class UserFactory extends Factory
         });
     }
 
-    public function student(){
+    public function ug_student(){
         return $this->state(function (array $attributes) {
-            $classgroup = ClassGroup::all()->random();
+            $classgroup = ClassGroup::ug_classgroups()->random();
             return [
                     'identity_number' => $this->faker->unique()->randomNumber(8),
                     'index_number' => $this->faker->unique()->randomNumber(8),
@@ -57,7 +57,20 @@ class UserFactory extends Factory
 
             ];
         });
-}
+    }
+
+    public function pg_student(){
+        return $this->state(function (array $attributes) {
+            $classgroup = ClassGroup::pg_classgroups()->random();
+            return [
+                    'identity_number' => $this->faker->unique()->randomNumber(8),
+                    'index_number' => $this->faker->unique()->randomNumber(8),
+                    'class_group_id' => $classgroup->id,
+                    'is_staff' => '0',
+
+            ];
+        });
+    }
 
     /**
      * Indicate that the model's email address should be unverified.
