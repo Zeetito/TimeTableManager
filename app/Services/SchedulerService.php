@@ -73,8 +73,15 @@ class SchedulerService
 
                 // Check if there are students for this course this year
                 if($students->count() > 0){
-                    $classrooms = self::get_best_classrooms_for_course($course,$students,$class_size);
+                    $classrooms = Classroom::get_best_classrooms_for_course($course,$class_size);
+                    
+                    // Check if classrooms are 0
+                    if($classrooms->count() < 1){
+                        $classrooms = Classroom::where('max_cap', '>=', 400)->get();
+                    }
+                    
                     $classrooms_ids = $classrooms->pluck('id')->toArray();
+                    // dd($classrooms->pluck('id'));
                 }else{
                     // If not, move on to the next Course
                     continue;
@@ -176,6 +183,8 @@ class SchedulerService
 
                     $best_classroom =  $available_classrooms[0];
 
+                    // dd($classrooms_ids);
+
                 }
 
                 // dd($timetable_course_for_lecturers);
@@ -203,6 +212,7 @@ class SchedulerService
                 $instance->start_time = $best_start_time;
                 $instance->end_time = $best_end_time;
                 $instance->user_id = $course->lecturers()->count() > 1 ? null : $course->lecturers()->first()->id;
+                // dd(collect($instance)->values());
                 // dd($instance);
                 
                 try {
@@ -238,29 +248,29 @@ class SchedulerService
     // Functions
 
     // Get best classroom for course
-    public static function get_best_classrooms_for_course(Course $course,$students,$class_size){
-            // Check for Classroom in the department / faculty or college 
-            // of the course to find a classroom capable of accomodatiing the class size
-            $classrooms = $course->department->classrooms->where('reg_cap', '>=', $class_size);
+    // public static function get_best_classrooms_for_course(Course $course,$students,$class_size){
+    //         // Check for Classroom in the department / faculty or college 
+    //         // of the course to find a classroom capable of accomodatiing the class size
+    //         $classrooms = $course->department->classrooms->where('reg_cap', '>=', $class_size);
 
-            // check faculty level
-            if(!$classrooms){
-                $classrooms = $course->faculty->classrooms->where('reg_cap', '>=', $class_size);
-            }
+    //         // check faculty level
+    //         if(!$classrooms){
+    //             $classrooms = $course->faculty->classrooms->where('reg_cap', '>=', $class_size);
+    //         }
 
-            // check college level
-            if(!$classrooms){
-                $classrooms = $course->college->classrooms->where('reg_cap', '>=', $class_size);
-            }
+    //         // check college level
+    //         if(!$classrooms){
+    //             $classrooms = $course->college->classrooms->where('reg_cap', '>=', $class_size);
+    //         }
 
-            // check all classrooms
-            if(!$classrooms){
-                $classrooms = Classroom::where('reg_cap', '>=', $class_size);
-            }
+    //         // check all classrooms
+    //         if(!$classrooms){
+    //             $classrooms = Classroom::where('reg_cap', '>=', $class_size);
+    //         }
 
-            return $classrooms;
+    //         return $classrooms;
 
-    }
+    // }
 
     
 

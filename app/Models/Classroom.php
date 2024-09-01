@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Course;
 use App\Models\Lecture;
 use App\Models\Department;
 use App\Models\TimetableCourse;
@@ -154,6 +155,48 @@ class Classroom extends Model
 
 
     }
+
+    // Get best classrooms for a course
+    public static function get_best_classrooms_for_course(Course $course,$class_size){
+        // Check for Classroom in the department / faculty or college 
+        // of the course to find a classroom capable of accomodatiing the class size
+        $cap = 'max_cap';
+        // for($i=1; $i<=2; $i++){
+            // $cap = $i == 1 ? "reg_cap" : "max_cap";
+
+            $classrooms = $course->department->classrooms->where($cap, '>=', $class_size);
+    
+            // check faculty level
+            if(!$classrooms){
+                $classrooms = $course->faculty->classrooms->where($cap, '>=', $class_size);
+            }
+    
+            // check college level
+            if(!$classrooms){
+                $classrooms = $course->college->classrooms->where($cap, '>=', $class_size);
+            }
+    
+            // check all classrooms
+            if(!$classrooms){
+                $classrooms = Classroom::where($cap, '>=', $class_size)->get();
+            }
+    
+            // if($classrooms){
+            //     break;
+            // }
+
+        // }
+        if(!$classrooms && $classsize > 400){
+            $classrooms = Classroom::where($cap, '>=', 400)->get()->toArray();
+        }
+        
+        $collection = collect($classrooms)->values();
+        
+        return $collection;
+
+
+}
+
 
 
 }

@@ -8,7 +8,9 @@ $title = "Home";
           <h1 class="section-header">
             <div>Dashboard</div>
           </h1>
+          {{ Breadcrumbs::render('home') }}
           <div class="row">
+
 
             {{-- <div class="col-lg-3 col-md-6 col-12">
               <div class="card card-sm-3">
@@ -71,15 +73,89 @@ $title = "Home";
               </div>
             </div>                   --}}
 
-            {{-- CLASHING CLASSROOMS --}}
-            <a href="{{route('clashing_classrooms',['semester'=>App\Models\Semester::active_semester()->id])}}" class="btn col-lg-3 col-md-6 col-12">
+            {{-- COLLEGES --}}
+            @if(auth()->user()->is_staff)
+
+              <a href="{{route('colleges')}}" class="btn col-lg-3 col-md-6 col-12">
+                <div class="card card-sm-3">
+                  <div class="card-icon bg-secondary">
+                    <i class="fa fa-building"></i>
+                  </div>
+                  <div class="card-wrap">
+                    <div class="card-header">
+                      <h4>See Colleges</h4>
+                    </div>
+                    <div class="card-body">
+                      
+                    </div>
+                  </div>
+                </div>
+              </a>
+
+              @else
+              <a href="{{route('show_college',auth()->user()->college()->id)}}" class="btn col-lg-3 col-md-6 col-12">
+                <div class="card card-sm-3">
+                  <div class="card-icon bg-secondary">
+                    <i class="fa fa-building"></i>
+                  </div>
+                  <div class="card-wrap">
+                    <div class="card-header">
+                      <h4>{{auth()->user()->college()->name}}</h4>
+                    </div>
+                    <div class="card-body">
+                      
+                    </div>
+                  </div>
+                </div>
+              </a>
+
+              @endif
+
+            {{-- CLASSGROUPS --}}
+            @if(auth()->user()->is_staff)
+            <a href="{{route('classgroups')}}" class="btn col-lg-3 col-md-6 col-12">
               <div class="card card-sm-3">
-                <div class="card-icon bg-danger">
+                <div class="card-icon bg-secondary">
                   <i class="fa fa-building"></i>
                 </div>
                 <div class="card-wrap">
                   <div class="card-header">
-                    <h4>Clashing Classrooms</h4>
+                    <h4>See Classgroups</h4>
+                  </div>
+                  <div class="card-body">
+                    
+                  </div>
+                </div>
+              </div>
+            </a>
+            @else
+              {{-- VIEW CLASSGROUP --}}
+            <a href="{{route('show_classgroup',['classgroup'=>auth()->user()->class_group->id])}}" class="btn col-lg-3 col-md-6 col-12">
+              <div class="card card-sm-3">
+                <div class="card-icon bg-secondary">
+                  <i class="fa fa-building"></i>
+                </div>
+                <div class="card-wrap">
+                  <div class="card-header">
+                    <h4>{{auth()->user()->class_group->slugname}}</h4>
+                  </div>
+                  <div class="card-body">
+                    
+                  </div>
+                </div>
+              </div>
+            </a>
+            @endif
+            
+            {{-- MY LECTURES --}}
+            <a href="{{route('user_timetable',['user'=>Auth::user()->id, 'semester' => App\Models\Semester::active_semester()->id ])}}" class="btn col-lg-3 col-md-6 col-12">
+              <div class="card card-sm-3">
+                <div class="card-icon bg-secondary">
+                  <i class="fa fa-book"></i>
+                </div>
+                <div class="card-wrap">
+                  <div class="card-header">
+                    <h4>My Timetable</h4>
                   </div>
                   <div class="card-body">
                     

@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\College;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Program extends Model
 {
@@ -35,5 +36,10 @@ class Program extends Model
     // Get undergraduage programs
     public static function ug(){
         return self::where('type','ug');
+    }
+
+    // Get related college
+    public function college(){
+        return $this->belongsTo(College::class);
     }
 }

@@ -28,7 +28,7 @@ class TimetableCourseSeeder extends Seeder
         $starttimes = TimetableCourse::START_TIMES;
 
         
-        
+        // Seed for all the taken courses
         while(Course::not_fully_assigned($sem)->count() > 0){
 
             foreach(Course::not_fully_assigned($sem) as $course){

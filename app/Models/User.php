@@ -49,6 +49,8 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $appends = ['fullname'];
+
     /**
      * The attributes that should be cast.
      *
@@ -58,9 +60,44 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    // Get user role attribute
+    public function getRoleAttribute(){
+        if($this->is_admin){
+            return "Admin";
+        }elseif($this->is_staff){
+            return "Staff";
+        }else{
+            return "Student";
+        }
+    }
+
+
+    public function getFullnameAttribute(){
+        return $this->firstname." ".$this->lastname;
+    }
+
 // STUDENTS
 
     // RELATIONSHIPS
+    // Get tiemtable for a particular user
+    public function timetable_for_sem($sem){
+        if($this->is_staff){
+            $classgroups = $this->staff_classgroups($sem)->pluck('id')->toArray();
+            
+            $results =  ClassGroup::classgroups_timetable_courses($classgroups,$sem);
+
+            $timetable_courses = $results[1];
+
+            return $timetable_courses->where('user_id',$this->id);
+        }
+        
+        return $this->class_group->timetable_courses_for($sem);
+    }
+
+    // Get user college
+    public function college(){
+        return $this->program()->college;
+    }
 
     // User Program
     public function program(){
@@ -85,9 +122,9 @@ class User extends Authenticatable
 // FUNCTIONS
     // GENERAL
         // Get Fullname of user
-        public function fullname(){
-            return $this->firstname." ".$this->othername." ".$this->lastname;
-        }
+        // public function fullname(){
+        //     return $this->firstname." ".$this->othername." ".$this->lastname;
+        // }
 
         // Get Avatar
         public function get_avatar(){
@@ -113,6 +150,12 @@ class User extends Authenticatable
     public static function students(){
         return self::where('is_staff',0)->get();
     }
+
+    // Get studetns
+    public static function get_students(){
+        return self::where('is_staff',0);
+    } 
+    
 
 
 

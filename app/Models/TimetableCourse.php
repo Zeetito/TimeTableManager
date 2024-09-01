@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Models\Course;
+use App\Models\College;
 use App\Models\Semester;
 use App\Models\Classroom;
 use App\Models\Timetable;
+use App\Models\ClassGroup;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -45,6 +47,11 @@ class TimetableCourse extends Model
         return $this->belongsTo(Classroom::class,'classroom_id');
     }
 
+    // COLLEGE
+    public function college(){
+        return $this->course->college;
+    }
+
 // FUNCTIONS
 
 
@@ -62,20 +69,10 @@ class TimetableCourse extends Model
 
     // Clashing courses based on classroom_day_start_time
     public static function clashing($sem){
-        $clashingCourses = TimetableCourse::where('semester_id', $sem)
-        ->get()
-        ->groupBy(function ($item) {
-            // Assuming 'day' is a string representing the day of the week
-            // or a date string that can be parsed
-            $day = $item->day; // Adjust this line if 'day' needs parsing, e.g., Carbon::parse($item->day)->dayOfWeek
-            return $item->classroom_id . '-' . $day . '-' . $item->start_time;
-        })
-        ->filter(function ($group) {
-            return $group->count() > 1;
-        });
+        // return clashing_timetable_courses($sem);
+       $clashing_classgroups = ClassGroup::with_clashing_courses($sem);
 
-        // Return the results
-        return $clashingCourses;
+       $clashing_time_table_courses = self::whereIn('class_group_id',$clashing_classgroups->pluck('id'))->where('day',1);
     }
 
 }

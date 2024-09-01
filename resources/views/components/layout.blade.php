@@ -74,17 +74,19 @@
     <div class="main-wrapper">
       <div class="navbar-bg"></div>
       <nav class="navbar navbar-expand-lg main-navbar">
-        <form class="form-inline mr-auto">
+        {{-- <form class="form-inline mr-auto">
           <ul class="navbar-nav mr-3">
             <li><a href="#" data-toggle="sidebar" class="nav-link nav-link-lg"><i class="ion ion-navicon-round"></i></a></li>
             <li><a href="#" data-toggle="search" class="nav-link nav-link-lg d-sm-none"><i class="ion ion-search"></i></a></li>
           </ul>
           <div class="search-element">
             <input class="form-control" type="search" placeholder="Search" aria-label="Search">
-            {{-- <button class="btn" type="submit"><i class="ion ion-search"></i></button> --}}
+            <button class="btn" type="submit"><i class="ion ion-search"></i></button>
           </div>
-        </form>
+        </form> --}}
         
+        <form class="form-inline mr-auto" method="Post" action="{{route("logout")}}"> 
+          @csrf
         <ul class="navbar-nav navbar-right">
           <li class="dropdown dropdown-list-toggle"><a href="#" data-toggle="dropdown" class="nav-link notification-toggle nav-link-lg beep"><i class="ion ion-ios-bell-outline"></i></a>
             <div class="dropdown-menu dropdown-list dropdown-menu-right">
@@ -134,17 +136,19 @@
           </li>
           <li class="dropdown"><a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg">
             <i class="ion ion-android-person d-lg-none"></i>
-            <div class="d-sm-none d-lg-inline-block">Hi, Ujang Maman</div></a>
+            <div class="d-sm-none d-lg-inline-block">Hi, {{auth()->user()->fullname}}</div></a>
             <div class="dropdown-menu dropdown-menu-right">
-              <a href="profile.html" class="dropdown-item has-icon">
+              <a href="{{route('profile', auth()->user()->id)}}" class="dropdown-item has-icon">
                 <i class="ion ion-android-person"></i> Profile
               </a>
-              <a href="#" class="dropdown-item has-icon">
+
+              <button type="submit" class="dropdown-item has-icon">
                 <i class="ion ion-log-out"></i> Logout
-              </a>
+              </button>
             </div>
           </li>
         </ul>
+        </form>
       </nav>
     {{-- Top Nav Ends --}}
 
@@ -159,9 +163,9 @@
                 <img alt="image" src="{{auth()->user()->get_avatar()}}">
                 </div>
                 <div class="sidebar-user-details">
-                <div class="user-name">{{auth()->user()->fullname()}}</div>
+                <div class="user-name">{{auth()->user()->fullname}}</div>
                 <div class="user-role">
-                    Administrator
+                    {{auth()->user()->role}}
                 </div>
                 </div>
             </div>
@@ -171,32 +175,35 @@
                 <a href="{{route('home')}}"><i class="ion ion-speedometer"></i><span>Dashboard</span></a>
                 </li>
 
-                <li class="menu-header">Group</li>
+                <li class="menu-header">MENU</li>
                 {{-- GROUP A --}}
                 <li>
-                <a href="#" class="has-dropdown"><i class="ion ion-ios-albums-outline"></i><span>Group A</span></a>
+                <a href="#" class="has-dropdown"><i class="ion ion-ios-albums-outline"></i><span>MENU</span></a>
                 <ul class="menu-dropdown">
-                    <li><a href="general.html"><i class="ion ion-ios-circle-outline"></i> College</a></li>
-                    <li><a href="components.html"><i class="ion ion-ios-circle-outline"></i>Faculty</a></li>
-                    <li><a href="buttons.html"><i class="ion ion-ios-circle-outline"></i> Departments</a></li>
-                    <li><a href="buttons.html"><i class="ion ion-ios-circle-outline"></i> Programs</a></li>
-                    <li><a href="buttons.html"><i class="ion ion-ios-circle-outline"></i> Courses</a></li>
+                    <li><a href="{{route('colleges')}}"><i class="ion ion-ios-circle-outline"></i> Colleges</a></li>
+                    {{-- <li><a href="components.html"><i class="ion ion-ios-circle-outline"></i>Faculties</a></li> --}}
+                    {{-- <li><a href="buttons.html"><i class="ion ion-ios-circle-outline"></i> Departments</a></li> --}}
+                    {{-- <li><a href="buttons.html"><i class="ion ion-ios-circle-outline"></i> Programs</a></li> --}}
+                    {{-- <li><a href="buttons.html"><i class="ion ion-ios-circle-outline"></i> Courses</a></li> --}}
                     <li><a href="{{route('classgroups')}}"><i class="ion ion-ios-circle-outline"></i> ClassGroups</a></li>
+                    @if(auth()->user()->is_admin)
+                      <li><a href="{{route('timetable_info',['semester'=>App\Models\Semester::active_semester()])}}"><i class="ion ion-ios-circle-outline"></i> Timetable Status</a></li>
+                    @endif
                 </ul>
                 </li>
 
                 {{-- GROUP B --}}
-                <li>
+                {{-- <li>
                 <a href="#" class="has-dropdown"><i class="ion ion-flag"></i><span>Group B</span></a>
                 <ul class="menu-dropdown">
-                    <li><a href="{{route('timetable_info',['semester'=>App\Models\Semester::active_semester()])}}"><i class="ion ion-ios-circle-outline"></i> Timetable(s)</a></li>
-                    <li><a href="flag.html"><i class="ion ion-ios-circle-outline"></i> Flag</a></li>
-                </ul>
-                </li>
+                    <li><a href="{{route('timetable_info',['semester'=>App\Models\Semester::active_semester()])}}"><i class="ion ion-ios-circle-outline"></i> Timetable(s)</a></li> --}}
+                    {{-- <li><a href="flag.html"><i class="ion ion-ios-circle-outline"></i> Flag</a></li> --}}
+                {{-- </ul>
+                </li> --}}
             
             
 
-                <li class="menu-header">More</li>
+                {{-- <li class="menu-header">More</li>
                 <li>
                 <a href="#" class="has-dropdown"><i class="ion ion-ios-nutrition"></i> Click Me</a>
                 <ul class="menu-dropdown">
@@ -222,13 +229,13 @@
                 </li>
                 <li>
                 <a href="credits.html"><i class="ion ion-ios-information-outline"></i> Credits</a>
-                </li>          
+                </li>           --}}
             </ul>
-            <div class="p-3 mt-4 mb-4">
+            {{-- <div class="p-3 mt-4 mb-4">
             <a href="http://stisla.multinity.com/" class="btn btn-danger btn-shadow btn-round has-icon has-icon-nofloat btn-block">
               <i class="ion ion-help-buoy"></i> <div>Go PRO!</div>
             </a>
-          </div>
+          </div> --}}
         </aside>
       </div>
     {{-- SideBar Ends --}}
@@ -265,8 +272,9 @@
 
       <footer class="main-footer">
         <div class="footer-left">
-          Copyright &copy; 2018 <div class="bullet"></div> Design By <a href="https://multinity.com/">Multinity</a>
+          Copyright &copy; {{Carbon\Carbon::now()->format('Y')}} 
         </div>
+
         <div class="footer-right"></div>
       </footer>
     </div>

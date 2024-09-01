@@ -6,6 +6,7 @@
             <div>{{$classgroup->slug_name()." @ ".$semester->academic_name()}}</div>
           </h1>
 
+          {{Breadcrumbs::render('classgroup',$classgroup)}}
 
           <div class="row">
 
@@ -56,7 +57,7 @@
                                                       <img class="dp" alt="image" src="{{$user->get_avatar()}}">
                                                     </div>
                                                     <div class="sidebar-user-details">
-                                                      <div class="user-name">{{$user->fullname()}}</div>
+                                                      <div class="user-name">{{$user->fullname}}</div>
                                                       {{-- <div class="user-role">
                                                         Student
                                                       </div> --}}
@@ -72,10 +73,11 @@
 
                           {{-- Courses --}}
                           <div class="tab-pane fade" id="profile4" role="tabpanel" aria-labelledby="profile-tab4">
-                              
-                            @if($classgroup->can_add_course($semester->id))
-                                <span class="btn btn-info" data-toggle="modal" data-url="{{route('create_classgroup_course',['classgroup'=>$classgroup])}}" data-target="#myModal" >Add New Course</span>
-                            @endif
+
+                              @if($classgroup->can_add_course($semester->id))
+                                  <span class="btn btn-info" data-toggle="modal" data-url="{{route('create_classgroup_course',['classgroup'=>$classgroup])}}" data-target="#myModal" >Add New Course</span>
+                              @endif
+
                             <table class="table table-striped datatable">
                                Total Credit Hour: {{$classgroup->total_credit_hour_for($semester->id)}}
                                 <caption>Courses For the Semester</caption>
@@ -283,9 +285,11 @@
                                                 <div class="col-{{$instance->duration}} border small border-solid border-black  {{$conflict ? 'bg-warning' : ''}} ">
 
                                                   {{-- Edit a timetable course instance here --}}
-                                                  <a href="{{route('edit_timetable_course',['timetable_course'=>$instance->id])}}">
-                                                    <span class="fa fa-edit float-end"></span>
-                                                  </a>
+                                                  @if(auth()->user()->role == 'Admin')
+                                                    <a href="{{route('edit_timetable_course',['classgroup'=>$classgroup, 'timetable_course'=>$instance->id ])}}">
+                                                      <span class="fa fa-edit float-end"></span>
+                                                    </a>
+                                                  @endif
 
                                                   <strong>{{$instance->course->code}}</strong> <br>
                                                    {{$instance->classroom->name}}

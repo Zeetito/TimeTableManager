@@ -43,7 +43,7 @@ class Course extends Model
     // COLLEGE
         // Return the related College
         public function college(){
-            return $this->belongsTo(College::class);
+            return $this->department->college;
         }
 
 
@@ -137,8 +137,8 @@ class Course extends Model
         // $query = Classgroup::timetable_courses_for_classgroups($classGroupIds,$sem);
         // return $query;
     }
-    // Get available start_times for a course to be assigned
-    public function available_start_times_on($day,$sem,$duration,$timetable_course){
+    // Get available start_times for a course to be assigned in html form
+    public function html_available_start_times_on($day,$sem,$duration,$timetable_course){
 
         // $start_times = [];
 
@@ -189,10 +189,48 @@ class Course extends Model
 
 
     }
+
+    // Get available start times on particular day
+    public function available_times_on($day,$sem,$duration,$timetable_course){
+              // $start_times = [];
+
+              $classgroups = $this->class_groups_for($sem);
+              $classgroupIds = $this->class_groups_for($sem)->pluck('id')->toArray();
+      
+              // for($i =1; $i<6; $i++){
+              $query = Classgroup::timetable_courses_for_classgroups($classgroupIds,$day,$sem);
+      
+              $start_times = $query[1]->unique('start_time')->pluck('start_time');
+      
+              // }
+              // Set the number of minutes to add
+              $minutesToAdd = (($duration*60)-5) ; // You can change this value dynamically
+      
+              // Initialize an empty array to hold the new pairs
+              $end_times = [];
+      
+              // Loop through each time in the original array
+              foreach ($start_times as $time) {
+                  // Create a DateTime object from the current time
+                  $dateTime = new DateTime($time);
+                  
+                  // Clone the DateTime object to avoid modifying the original
+                  $dateTimePlusDynamicMinutes = clone $dateTime;
+                  
+                  // Add the specified number of minutes
+                  $dateTimePlusDynamicMinutes->modify("+$minutesToAdd minutes"); 
+                  
+                  // Add the pair to the new array
+                  $end_times[] = $dateTimePlusDynamicMinutes->format('H:i:s');
+              }
+      
+            return [$start_times,$end_times];
+    }
+
     
     // CLASSROOM
     // Get available classroom for a particular day at a particular time
-    public function available_classrooms_on($day,$sem,$start_time,$timetable_course){
+    public function html_available_classrooms_on($day,$sem,$start_time,$timetable_course){
        $timetable_courses =  TimetableCourse:: scheduled_for($day,$sem)->where('start_time',$start_time)->get();
        $occupied_classroom = $timetable_course->pluck('classroom_id')->toArray();
        $targets = $timetable_course->course->department->classrooms->whereNotIn('id',$occupied_classroom);

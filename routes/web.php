@@ -9,13 +9,18 @@ use App\Models\Lecture;
 use App\Models\Semester;
 use App\Models\Classroom;
 use App\Models\ClassGroup;
+use App\Models\Department;
 use App\Models\TimetableCourse;
 use App\Models\ClassGroupCourse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\CollegeController;
+use App\Http\Controllers\FacultyController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassGroupController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\TimetableCourseController;
 use App\Http\Controllers\ClassGroupCourseController;
 
@@ -34,20 +39,46 @@ Route::get('/', function () {
     return view('welcome');
 });
 Route::get('/hello', function () {
-
-    return TimetableCourse::clashing(6);
-
-    return Course::where('id','1361')->first()->available_days(6);
-    return TimetableCourse::where('course_id','552')->get();
-
-    return date('l', strtotime("Sunday +{5} days"));
-
-    return TimetableCourse::START_TIMES[array_rand(TimetableCourse::START_TIMES)];
-
-    return ClassGroup::ug_classgroups()->random();
+    return User::find(2)->timetable_for_sem(6);
+    return TimetableCourse::find(4)->course->college();
+    
 
 
 });
+
+
+// USER
+    // View User profile
+    Route::get('profile/{user}',[UserController::class,'profile'])
+    ->middleware('auth')
+    ->name('profile');
+
+// COLLEGES
+    // View all colleges
+    Route::get('colleges',[CollegeController::class,'index'])
+    ->middleware('auth')
+    ->name('colleges');    
+
+    // Show college
+    Route::get('colleges/{college}',[CollegeController::class,'show'])
+    ->middleware('auth')
+    ->name('show_college');
+
+// FACULTY
+    // View all faculties
+
+    // Show A Faculty
+    Route::get('faculties/{faculty}',[FacultyController::class,'show'])
+    ->middleware('auth')
+    ->name('show_faculty');
+
+// DEPARTMENT
+    // View all departments
+
+    // Show a department
+    Route::get('departments/{department}',[DepartmentController::class,'show'])
+    ->middleware('auth')
+    ->name('show_department');
 
 
 // CLASSROOMS
@@ -64,7 +95,7 @@ Route::get('/hello', function () {
     ->name('timetable_info');
 
     // Editing Timetable Course Instance
-    Route::get('edit_timetable_course/{timetable_course}',[TimetableCourseController::class,'edit'])
+    Route::get('edit_timetable_course/{classgroup}/{timetable_course}',[TimetableCourseController::class,'edit'])
     ->middleware('auth')
     ->name('edit_timetable_course');
 
@@ -72,6 +103,11 @@ Route::get('/hello', function () {
     Route::put('update_timetable_course/{timetable_course}',[TimetableCourseController::class,'update'])
     ->middleware('auth')
     ->name('update_timetable_course');
+
+    // View tiemtable for a particular user
+    Route::get('user_timetable/{user}/{semester}',[UserController::class,'timetable'])
+    ->middleware('auth')
+    ->name('user_timetable');
 
 
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\Semester;
+use App\Models\ClassGroup;
 use Illuminate\Http\Request;
 use App\Jobs\GenerateTimetable;
 use App\Models\TimetableCourse;
@@ -63,10 +64,10 @@ class TimetableCourseController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(TimetableCourse $timetable_course)
+    public function edit(ClassGroup $classgroup, TimetableCourse $timetable_course)
     {
-        //
-        return view('admin.timetable_course.edit',['timetable_course'=>$timetable_course]);
+        // Get related classgroup
+        return view('admin.timetable_course.edit',['timetable_course'=>$timetable_course, 'classgroup'=>$classgroup]);
     }
 
     /**
@@ -160,7 +161,7 @@ class TimetableCourseController extends Controller
 
         $day =  $request->input('variable');
 
-        $engaged_start_times =  $course->available_start_times_on($day,$timetable_course->semester_id,$timetable_course->duration,$timetable_course->id);
+        $engaged_start_times =  $course->html_available_start_times_on($day,$timetable_course->semester_id,$timetable_course->duration,$timetable_course->id);
 
         return($engaged_start_times);
     }
@@ -171,7 +172,7 @@ class TimetableCourseController extends Controller
 
         $start_time =  $request->input('variable');
 
-        $available_classrooms = $course->available_classrooms_on($day,$timetable_course->semester_id,$start_time,$timetable_course);
+        $available_classrooms = $course->html_available_classrooms_on($day,$timetable_course->semester_id,$start_time,$timetable_course);
 
         return $available_classrooms;
 

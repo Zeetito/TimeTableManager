@@ -14,7 +14,8 @@ class ClassGroupController extends Controller
     // Show All ClassGroups
     public function index(){
         $classgroups = ClassGroup::all();
-        return view('admin.classgroup.index',['classgroups'=>$classgroups,'title'=>"Classgroups"]);
+        $semester = Semester::active_semester();
+        return view('admin.classgroup.index',['classgroups'=>$classgroups,'title'=>"Classgroups",'semester'=>$semester]);
     }
 
     // Show single ClassGroup

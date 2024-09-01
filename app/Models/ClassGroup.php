@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use DateTime;
 use App\Models\Course;
 use App\Models\Lecture;
 use App\Models\Program;
 use App\Models\Semester;
+use App\Models\ClassGroup;
 use Illuminate\Support\Carbon;
 use App\Models\TimetableCourse;
 use App\Models\ClassGroupCourse;
 use App\Models\ClassCourseLecture;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ClassGroup extends Model
@@ -24,6 +27,11 @@ class ClassGroup extends Model
         'end_year',
         'start_year',
     ];
+
+    // Get slug name
+    public function getSlugnameAttribute(){
+        return $this->name." - ".$this->year ;
+    }
 
 // RELATIONSHIPS
         // Return members of the class group
@@ -63,21 +71,21 @@ class ClassGroup extends Model
 
         // COURSES
 
-        // Get all courses Taken by the class group
-        public function all_courses(){
-            return Course::whereIn('id',$this->class_group_courses->pluck('course_id'))->get();
-        }
+            // Get all courses Taken by the class group
+            public function all_courses(){
+                return Course::whereIn('id',$this->class_group_courses->pluck('course_id'))->get();
+            }
 
-        // Ge All related Courses for the Sem
-        public function courses_for($sem){
-            return Course::whereIn('id',$this->class_group_courses_for($sem)->pluck('course_id'))->get();
-            // return ClassGroupCourse::where('class_group_id',$this->id)->where('semester_id',$sem)->get();
-        }
+            // Ge All related Courses for the Sem
+            public function courses_for($sem){
+                return Course::whereIn('id',$this->class_group_courses_for($sem)->pluck('course_id'))->get();
+                // return ClassGroupCourse::where('class_group_id',$this->id)->where('semester_id',$sem)->get();
+            }
 
-        // Get Total credit hours for the sem
-        public function total_credit_hour_for($sem){
-            return $this->courses_for($sem)->pluck('credit_hour')->sum();
-        }
+            // Get Total credit hours for the sem
+            public function total_credit_hour_for($sem){
+                return $this->courses_for($sem)->pluck('credit_hour')->sum();
+            }
 
         // LECTURES
 
@@ -115,7 +123,7 @@ class ClassGroup extends Model
                 return Lecture::where('semester_id',$sem)->whereIn('course_id',$courses)->get();
             }
 
-        // Attendance
+        // ATTENDANCE
             // Get Number of Students present for a lecture
             public function attendees_for(Lecture $lecture){
                 // return $this->users;
@@ -131,19 +139,19 @@ class ClassGroup extends Model
             }
 
         
-        // ClassGroup Course
-        // Get related classgroup course instance for a course for the current sem
-       public function current_classgroup_course_instance_with(Course $course){
-            $active_semester =  Semester::active_semester();
-            return ClassGroupCourse::where('class_group_id',$this->id)->where('course_id',$course->id)->where('semester_id',$active_semester->id)->first();
-        }
+        // CLASSGROUP COURSE
+            // Get related classgroup course instance for a course for the current sem
+        public function current_classgroup_course_instance_with(Course $course){
+                $active_semester =  Semester::active_semester();
+                return ClassGroupCourse::where('class_group_id',$this->id)->where('course_id',$course->id)->where('semester_id',$active_semester->id)->first();
+            }
 
 
         // TIMETABLE COURSES
-        // Get timetable courses instance for the sem
-        public function timetable_courses_for($sem){
-            return TimetableCourse::whereIn('course_id',$this->courses_for($sem)->pluck('id'));
-        }
+            // Get timetable courses instance for the sem
+            public function timetable_courses_for($sem){
+                return TimetableCourse::whereIn('course_id',$this->courses_for($sem)->pluck('id'));
+            }
 
         // Get timetable courses for a particular day of the sem
         public function timetable_scheduled_for($day, $sem){
@@ -231,6 +239,147 @@ class ClassGroup extends Model
             return min($values);
         }
 
+        // Check if classgroup has clashing timetable courses
+        public function has_clashing_timetable_courses($sem){
+
+            $instances = $this->timetable_courses_for($sem) ->get()
+            ->groupBy(function ($item) {
+                // Assuming 'day' is a string representing the day of the week
+                // or a date string that can be parsed
+                return $item->day . '-' . $item->start_time;
+            })
+            ->filter(function ($group) {
+                return $group->count() > 1;
+            });
+        
+            if($instances->count() > 0){
+                return true;
+            }else{
+                return false;
+            }
+            
+        }
+
+
+        // Return Clashing timetable courses
+        public function clashing_timetable_courses($sem){
+
+            $instances = $this->timetable_courses_for($sem) ->get()
+            ->groupBy(function ($item) {
+                // Assuming 'day' is a string representing the day of the week
+                // or a date string that can be parsed
+                return $item->day . '-' . $item->start_time;
+            })
+            ->filter(function ($group) {
+                return $group->count() > 1;
+            });
+
+            $targets = [];
+
+             // Loop through each group of clashing timetable courses and run additional processes
+            foreach ($instances as $key => $clashes) {
+                $targets[] = $clashes[0];
+            }
+
+            return $targets;
+
+        }
+
+        // Fix clashing timetable_courses
+        public function fix_clashing_courses($sem){
+
+            $instances = $this->clashing_timetable_courses($sem);
+            
+            // Loop through the instances and fix each of them
+            foreach($instances as $instance){
+                $course = $instance->course;
+                $minutesToAdd = (($instance->duration*60)-5); 
+                // Get the available days
+                $available_days =  $course->available_days($sem);
+                // Initiate start and end times variable
+                $end_time = null;
+                $start_time = null;
+                $day = null;
+
+                // Loop through the available days and get a favorable time
+                foreach($available_days as $day){
+
+                    // Get available endtime
+                    $available_times = $course->available_times_on($day,$sem,$instance->duration,$instance);
+
+                    // Get start times
+                    $start_times = ($available_times[0]);
+
+                    // Get end times
+                    $end_times = ($available_times[1]);
+
+
+                        // Loop Through the starttimes and get suitable time
+                        foreach($start_times as $possible_start_time){
+                            // Get the corresponding endtime based on duration
+                            $dateTime = new DateTime($possible_start_time);
+                  
+                            // Clone the DateTime object to avoid modifying the original
+                            $dateTimePlusDynamicMinutes = clone $dateTime;
+                            
+                            // Add the specified number of minutes
+                            $dateTimePlusDynamicMinutes->modify("+$minutesToAdd minutes"); 
+                            
+                            // Add the pair to the new array
+                            $possible_end_time = (string) $dateTimePlusDynamicMinutes->format('H:i:s');
+                            
+                            // Chcek if the end time exists in the endtimes array
+                            if (in_array($possible_end_time, $end_times)) {
+                                $end_time = $possible_end_time;
+                                $start_time = $possible_start_time;
+                                $day = $day;
+                                break;
+                            }else{
+                                continue;
+                            } 
+
+                        }
+
+                    // Check different day if any of the variables is not found
+                    if($start_time == null || $end_time == null){
+                        continue;
+                    }else{
+                        break;
+                    }  
+
+                    
+                }
+                
+                // Run this code after gettint the dynamic variables
+                $instance->start_time = $start_time;
+                $instance->end_time = $end_time;
+                $instance->day = $day;
+                // $instance->classroom
+                
+                try {
+                    // Attempt to insert a new record
+                    $instance->save();
+                
+                } catch (QueryException $e) {
+
+                    // Check if the exception is due to a unique constraint violation
+                    if ($e->getCode() == 23000) {
+                        continue;
+                    } else {
+                        // Handle other types of database exceptions
+                        echo "An unexpected database error occurred: " . $e->getMessage();
+                        continue;
+                    }
+
+                }
+
+            }
+            
+        }
+
+
+
+
 
 // STATIC FUNCTIONS
         // return a day and time that an array of classgroups can meet for the same course
@@ -259,6 +408,25 @@ class ClassGroup extends Model
             return [$exceeds,$results];
         }
 
+        // Return timetable course scheduled for any array of classgroups
+        public static function classgroups_timetable_courses(array $classgroup_ids, $sem){
+            $exceeds = false;
+            $results = (new TimetableCourse)->newCollection();
+            foreach ($classgroup_ids as $classgroup){
+                $targets = Classgroup::find($classgroup)->timetable_courses_for($sem)->get();
+
+                // Check if any of the classgroups is totally occupied that day
+                if ($targets->pluck('duration')->sum() > 6){
+                    $exceeds = true;
+                }
+
+
+                $results =  $results->merge($targets);
+            }
+
+            return [$exceeds,$results];
+        }
+
 
         // Get all postGraduate classgroups
         public static function pg_classgroups(){
@@ -270,4 +438,37 @@ class ClassGroup extends Model
             return self::whereIn('program_id',Program::ug()->pluck('id'))->get();
         }
 
+        // Return Classgroups with clashing timetable
+        public static function with_clashing_courses($sem)
+        {
+            // Initialize an empty collection to hold the class groups that meet the condition
+            $classgroups = collect();
+        
+            // Get Classgroups with clashing timetable in chunks of 100
+            ClassGroup::chunk(100, function($groups) use ($sem, $classgroups) {
+                foreach ($groups as $group) {
+                    if ($group->has_clashing_timetable_courses($sem)) {
+                        $classgroups->push($group->makeHidden(['class_group_courses']));
+                    }
+                }
+            });
+        
+            return $classgroups;
+        }
+
+        // TESTING
+
+        // Fixing the clashes
+        public static function testing($sem){
+            $ids = Classgroup::with_clashing_courses($sem)->pluck('id');
+            $targets =Classgroup::whereIn('id',$ids);
+            $targets->chunk(100, function($groups) use ($sem) {
+
+                foreach ($groups as $group) {
+                    $group->fix_clashing_courses($sem);
+                }
+            });
+
+            return "Work's done";
+        }
 }
